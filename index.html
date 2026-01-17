@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Titan-1 Secure Archive Data Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --bg:#050505;
+  --panel:#0e0e0e;
+  --border:#2a2a2a;
+  --text:#e6e6e6;
+  --danger:#a00000;
+  --ok:#00aa66;
+  --accent:#1f6fff;
+}
+
+body {
+  margin:0;
+  background:radial-gradient(circle at top, #0b0b0b, #000);
+  color:var(--text);
+  font-family:Consolas, monospace;
+}
+
+.hidden { display:none; }
+
+.container {
+  max-width:1200px;
+  margin:auto;
+  padding:30px;
+}
+
+.panel {
+  background:linear-gradient(#111,#0a0a0a);
+  border:1px solid var(--border);
+  padding:25px;
+  margin-bottom:25px;
+  box-shadow:0 0 25px rgba(0,0,0,0.6);
+}
+
+h1,h2,h3 { margin-top:0; }
+
+input,button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  background:#000;
+  color:#fff;
+  border:1px solid #444;
+  font-family:inherit;
+}
+
+button { cursor:pointer; }
+button:hover { background:#111; }
+
+.error { color:var(--danger); }
+.success { color:var(--ok); }
+
+.header {
+  display:flex;
+  align-items:center;
+  gap:20px;
+}
+
+.logo {
+  width:80px;
+  height:80px;
+  border:1px solid #333;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+}
+
+.badge {
+  border:1px solid #444;
+  padding:4px 10px;
+  font-size:0.75rem;
+  margin-right:10px;
+}
+
+.terminal {
+  background:#000;
+  border:1px solid #333;
+  padding:15px;
+  height:160px;
+  overflow-y:auto;
+  font-size:0.9rem;
+  white-space:pre-wrap;
+}
+
+.grid {
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+  animation:scroll 20s linear infinite;
+}
+
+@keyframes scroll {
+  from { background-position:0 0; }
+  to { background-position:40px 40px; }
+}
+
+.file {
+  border:1px solid #333;
+  padding:10px;
+  margin:8px 0;
+  cursor:pointer;
+}
+
+.file:hover {
+  background:#111;
+}
+
+.footer {
+  text-align:center;
+  font-size:0.75rem;
+  color:#666;
+  margin-top:40px;
+}
+</style>
+</head>
+
+<body>
+<div class="grid"></div>
+
+<!-- LOGIN -->
+<div id="login" class="container">
+  <div class="panel">
+    <h1>SECURE ACCESS TERMINAL</h1>
+    <input type="password" id="o5Input" placeholder="ENTER O5 AUTHORIZATION">
+    <button onclick="login()">AUTHENTICATE</button>
+    <div id="loginErr" class="error"></div>
+  </div>
+</div>
+
+<!-- DATA CENTER -->
+<div id="center" class="container hidden">
+
+  <div class="panel header">
+    <div class="logo">
+      <!-- Replace with <img src="logo.png" width="60"> -->
+      TITAN-1
+    </div>
+    <div>
+      <h1>TITAN-1 ARCHIVE DATA CENTER</h1>
+      <span class="badge">CLEARANCE: O5</span>
+      <span class="badge">SYSTEM: ONLINE</span>
+    </div>
+  </div>
+
+  <div id="terminal" class="panel terminal"></div>
+
+  <div class="panel">
+    <h2>Personnel Information Archive</h2>
+    <input type="password" id="l4">
+    <button onclick="unlockL4()">REQUEST LEVEL 4 ACCESS</button>
+    <div id="l4Err" class="error"></div>
+    <button id="openPersonnel" class="hidden" onclick="view('personnel')">OPEN ARCHIVE</button>
+  </div>
+
+  <div class="panel">
+    <h2>Mobile Task Force Data Archive</h2>
+    <input type="password" id="l5">
+    <button onclick="unlockL5()">REQUEST LEVEL 5 ACCESS</button>
+    <div id="l5Err" class="error"></div>
+    <button id="openMTF" class="hidden" onclick="view('mtf')">OPEN ARCHIVE</button>
+  </div>
+
+  <div class="panel">
+    <h2>Command Console</h2>
+    <input id="cmd" placeholder="enter command">
+    <button onclick="command()">EXECUTE</button>
+  </div>
+
+  <button onclick="lockdown()">INITIATE LOCKDOWN</button>
+
+  <div class="footer">Secure • Contain • Protect</div>
+</div>
+
+<!-- PERSONNEL -->
+<div id="personnel" class="container hidden">
+  <div class="panel">
+    <h1>PERSONNEL FILES</h1>
+    <div class="file" onclick="file('Commander Rho')">Commander Rho</div>
+    <div class="file" onclick="file('Field Operatives')">Field Operatives</div>
+    <button onclick="home()">RETURN</button>
+  </div>
+</div>
+
+<!-- MTF -->
+<div id="mtf" class="container hidden">
+  <div class="panel">
+    <h1>MTF ARCHIVES</h1>
+    <div class="file" onclick="file('MTF Titan-1')">MTF Titan-1</div>
+    <div class="file" onclick="file('Deployment Logs')">Deployment Logs</div>
+    <button onclick="home()">RETURN</button>
+  </div>
+</div>
+
+<script>
+const PASS_O5="O5 COUNCIL";
+const PASS_L4="LEVEL 4";
+const PASS_L5="LEVEL 5";
+
+const t=()=>document.getElementById("terminal");
+function log(m){let i=0;const s=setInterval(()=>{t().textContent+=m[i++];t().scrollTop=9999;if(i>=m.length)clearInterval(s)},15)}
+
+function login(){
+  if(o5Input.value===PASS_O5){
+    login.classList.add("hidden");
+    center.classList.remove("hidden");
+    log(">> O5 AUTH VERIFIED\n>> DATA CENTER ONLINE\n");
+  } else loginErr.textContent="ACCESS DENIED";
+}
+
+function unlockL4(){
+  if(l4.value===PASS_L4){
+    localStorage.l4=1;
+    openPersonnel.classList.remove("hidden");
+    log(">> LEVEL 4 GRANTED\n");
+  } else l4Err.textContent="INVALID";
+}
+
+function unlockL5(){
+  if(l5.value===PASS_L5){
+    localStorage.l5=1;
+    openMTF.classList.remove("hidden");
+    log(">> LEVEL 5 GRANTED\n");
+  } else l5Err.textContent="INVALID";
+}
+
+function view(v){
+  center.classList.add("hidden");
+  document.getElementById(v).classList.remove("hidden");
+}
+
+function home(){
+  personnel.classList.add("hidden");
+  mtf.classList.add("hidden");
+  center.classList.remove("hidden");
+}
+
+function file(name){
+  alert("OPENING FILE:\n"+name+"\n\n[DATA REDACTED]");
+}
+
+function command(){
+  if(cmd.value==="status") log("SYSTEM STATUS: STABLE\n");
+  else if(cmd.value==="clear") t().textContent="";
+  else log("UNKNOWN COMMAND\n");
+  cmd.value="";
+}
+
+function lockdown(){
+  document.body.style.background="#200";
+  log("!! LOCKDOWN INITIATED !!\n");
+}
+
+if(localStorage.l4) openPersonnel.classList.remove("hidden");
+if(localStorage.l5) openMTF.classList.remove("hidden");
+</script>
+</body>
+</html>
